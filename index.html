@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 16 Midterm 1 — Interactive Study Guide v2</title>
+<style>
+  :root {
+    --blue:#1a73e8;--blue-bg:#e8f0fe;
+    --red:#d93025;--red-bg:#fce8e6;
+    --green:#188038;--green-bg:#e6f4ea;
+    --purple:#7b1fa2;--purple-bg:#f3e5f5;
+    --orange:#e37400;--orange-bg:#fef7e0;
+    --gray:#5f6368;--dark:#202124;
+    --shadow:0 2px 8px rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8f9fa;color:var(--dark);}
+  #bar{position:fixed;top:0;left:0;height:4px;background:var(--blue);transition:width .3s;z-index:100;}
+  #nav{position:fixed;top:4px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+       background:#fff;padding:10px 20px;box-shadow:var(--shadow);z-index:99;}
+  #nav-title{font-weight:700;font-size:15px;color:var(--blue);}
+  #ctr{font-size:13px;color:var(--gray);}
+  #toc-btn{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;}
+  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:stretch;}
+  #panel{width:300px;background:#fff;overflow-y:auto;padding:20px;z-index:201;}
+  #panel h2{font-size:18px;margin-bottom:16px;color:var(--blue);}
+  .ti{display:block;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--dark);margin-bottom:2px;}
+  .ti:hover{background:var(--blue-bg);}
+  .ti.act{background:var(--blue);color:#fff;}
+  #show{margin-top:64px;padding:20px 20px 80px;max-width:860px;margin-left:auto;margin-right:auto;}
+  .slide{display:none;animation:fi .25s ease;}
+  .slide.active{display:block;}
+  @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .sh{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;}
+  .slide h1{font-size:26px;font-weight:800;margin-bottom:16px;line-height:1.2;}
+  .slide h2{font-size:20px;font-weight:700;margin-bottom:12px;}
+  .card{border-radius:10px;padding:16px 20px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .card.b{background:var(--blue-bg);border-left:4px solid var(--blue);}
+  .card.r{background:var(--red-bg);border-left:4px solid var(--red);}
+  .card.g{background:var(--green-bg);border-left:4px solid var(--green);}
+  .card.p{background:var(--purple-bg);border-left:4px solid var(--purple);}
+  .card.o{background:var(--orange-bg);border-left:4px solid var(--orange);}
+  .card.w{background:#fff;}
+  .lbl{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
+  .b .lbl{color:var(--blue)}.r .lbl{color:var(--red)}.g .lbl{color:var(--green)}.p .lbl{color:var(--purple)}.o .lbl{color:var(--orange)}
+  .card p,.card li{font-size:15px;line-height:1.6;}
+  .card ul{padding-left:18px;}
+  code{background:rgba(0,0,0,.08);border-radius:3px;padding:1px 5px;font-family:monospace;font-size:14px;}
+  table{width:100%;border-collapse:collapse;margin-top:8px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:var(--shadow);}
+  th{background:var(--blue);color:#fff;padding:10px 14px;font-size:13px;text-align:left;}
+  td{padding:9px 14px;font-size:14px;border-bottom:1px solid #e8eaed;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--blue-bg);}
+  .rb{background:var(--green);color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:14px;font-weight:600;margin-top:8px;}
+  .ra{display:none;margin-top:10px;padding:12px 16px;background:var(--green-bg);border-radius:8px;border-left:3px solid var(--green);font-size:14px;}
+  .ra.on{display:block;}
+  .yt{display:inline-flex;align-items:center;gap:6px;background:#ff0000;color:#fff;text-decoration:none;
+      border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;margin-top:10px;}
+  .yt:hover{background:#cc0000;}
+  /* FIXED nav bar at bottom — BUG FIX from v1 */
+  #bot{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;
+       background:#fff;padding:12px 20px;box-shadow:0 -2px 8px rgba(0,0,0,.1);z-index:98;}
+  .nb{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:15px;font-weight:600;cursor:pointer;}
+  .nb:disabled{background:#ccc;cursor:not-allowed;}
+  .nb:hover:not(:disabled){background:#1557b0;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .fb{background:#fff;border-radius:8px;padding:14px;text-align:center;box-shadow:var(--shadow);}
+  .fb .f{font-size:20px;font-weight:800;color:var(--blue);font-family:monospace;}
+  .fb .d{font-size:12px;color:var(--gray);margin-top:4px;}
+  .tb th,.tb td{text-align:center;font-family:monospace;}
+  .t{color:var(--green);font-weight:700;}
+  .f2{color:var(--red);font-weight:700;}
+  /* MCQ option styling for Part A slides */
+  .mcq{background:#fff;border-radius:8px;padding:12px 16px;margin-bottom:8px;box-shadow:var(--shadow);font-size:14px;display:flex;gap:12px;align-items:flex-start;}
+  .mcq-letter{font-weight:800;color:var(--gray);min-width:20px;}
+  .mcq.correct{background:var(--green-bg);border:2px solid var(--green);}
+  .mcq.correct .mcq-letter{color:var(--green);}
+  @media(max-width:600px){.g2{grid-template-columns:1fr}.slide h1{font-size:20px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="nav">
+  <span id="nav-title">CSE 16 — Midterm 1 Study Guide v2</span>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span id="ctr">Slide 1 / 31</span>
+    <button id="toc-btn" onclick="toggleTOC()">Contents</button>
+  </div>
+</div>
+<div id="overlay" onclick="closeTOC()">
+  <div id="panel" onclick="event.stopPropagation()">
+    <h2>Table of Contents</h2>
+    <div id="tlist"></div>
+  </div>
+</div>
+<div id="show">
+
+<!-- SLIDE 0: Welcome -->
+<div class="slide active" data-i="0">
+  <div class="sh">Start Here</div>
+  <h1>CSE 16 Midterm 1<br>Interactive Study Guide v2</h1>
+  <div class="card b">
+    <div class="lbl">What's on the Exam</div>
+    <table><tr><th>Section</th><th>Points</th><th>Topics</th></tr>
+      <tr><td><strong>Part A</strong></td><td>6 pts</td><td>Nested Quantifiers — 3 MCQ</td></tr>
+      <tr><td><strong>Part B</strong></td><td>16 pts</td><td>Sets &amp; Logic — 16 True/False (Q4–Q19)</td></tr>
+      <tr><td><strong>Part C</strong></td><td>20 pts</td><td>Counting — 10 free-response (Q20–Q29)</td></tr>
+      <tr><td><strong>Part D</strong></td><td>10 pts</td><td>Truth Table tautology proof</td></tr>
+    </table>
+  </div>
+  <div class="card g">
+    <div class="lbl">How to Use</div>
+    <ul>
+      <li>Use <strong>← →</strong> arrow keys or Prev/Next buttons to navigate</li>
+      <li>Click <strong>Contents</strong> to jump to any slide</li>
+      <li>Click <strong>Reveal Answer</strong> buttons on practice problems</li>
+      <li><span style="color:var(--blue)">■ Blue=Definition</span> · <span style="color:var(--red)">■ Red=Trap</span> · <span style="color:var(--green)">■ Green=Steps/Answer</span> · <span style="color:var(--purple)">■ Purple=Analogy</span></li>
+    </ul>
+  </div>
+  <div class="card p">
+    <div class="lbl">Big Picture</div>
+    <p>Four lenses: <em>What exists? (Sets) → What follows? (Logic) → Does it always hold? (Quantifiers) → How many? (Counting) → Can you prove it? (Truth Tables)</em>. Master these and you own the exam.</p>
+  </div>
+</div>
+
+<!-- SLIDE 1: Sets Basics -->
+<div class="slide" data-i="1">
+  <div class="sh">Part B — Sets</div>
+  <h2>Slide 1: Sets — Notation &amp; Basics</h2>
+  <div class="card b">
+    <div class="lbl">Definition</div>
+    <ul>
+      <li>A <strong>set</strong> = unordered collection of distinct objects: <code>A = {1,2,3}</code></li>
+      <li><code>x ∈ A</code> = x is an element of A &nbsp;·&nbsp; <code>x ∉ A</code> = x is NOT an element</li>
+      <li><code>A ⊆ B</code> = every element of A is in B (subset)</li>
+      <li><code>A = B</code> iff <code>A ⊆ B</code> AND <code>B ⊆ A</code> (mutual containment)</li>
+      <li><code>∅</code> = empty set. <code>∅ ⊆ A</code> for ANY set A — even <code>∅ ⊆ ∅</code></li>
+    </ul>
+  </div>
+  <div class="card r">
+    <div class="lbl">Trap — ∈ vs ⊆</div>
+    <p>Given <code>A = {2, {2,{2}}}</code>: Is <code>{2} ∈ A</code>? <strong>NO</strong> — it's not listed as an element (A has elements 2 and {2,{2}} — not {2}). Is <code>2 ∈ A</code>? <strong>YES</strong>. <code>∈</code> asks "is this an element at the outermost level?"</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>True or False: <code>∅ ∈ {∅, {∅}}</code></p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>TRUE.</strong> ∅ is listed as an element of the set. {∅, {∅}} has two elements: ∅ and {∅}.</div>
+  </div>
+  <a class="yt" href="https://www.youtube.com/results?search_query=discrete+math+sets+notation+basics" target="_blank">▶ YouTube: Sets Basics</a>
+</div>
+
+<!-- SLIDE 2: Cardinality -->
+<div class="slide" data-i="2">
+  <div class="sh">Part B — Sets</div>
+  <h2>Slide 2: Set Cardinality</h2>
+  <div class="card b">
+    <div class="lbl">Definition</div>
+    <ul>
+      <li><code>|A|</code> = number of elements in A (count at outermost level only)</li>
+      <li><code>|∅| = 0</code></li>
+      <li><code>|{∅}| = 1</code> — one element: the empty set itself</li>
+      <li><code>|{∅, {∅}}| = 2</code></li>
+      <li><code>|{ {1,2}, 3, ∅ }| = 3</code> — count items at top level</li>
+    </ul>
+  </div>
+  <div class="card r">
+    <div class="lbl">Exam Trap — Q18: |{∅}| = 0?</div>
+    <p><code>{∅}</code> looks empty but has cardinality <strong>1</strong>. The exam states <code>|{∅}| = 0</code> — this is <strong>FALSE</strong>. The bag contains one item (an empty bag). Don't peek inside inner sets.</p>
+  </div>
+  <div class="card p">
+    <div class="lbl">Analogy</div>
+    <p>Cardinality = how many things are in the outer bag. A bag with an empty bag inside has 1 item. Count items; don't open them.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>What is <code>|{ {1,2}, {3}, ∅, 5 }|</code>?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>4.</strong> Four items at the outer level: {1,2}, {3}, ∅, and 5.</div>
+  </div>
+</div>
+
+<!-- SLIDE 3: Cartesian Products -->
+<div class="slide" data-i="3">
+  <div class="sh">Part B — Sets</div>
+  <h2>Slide 3: Cartesian Products</h2>
+  <div class="card b">
+    <div class="lbl">Definition</div>
+    <ul>
+      <li><code>A×B = {(a,b) | a∈A, b∈B}</code> — all ordered pairs</li>
+      <li><code>|A×B| = |A|·|B|</code></li>
+      <li>Distributes over ∩: <code>A×(C∩D) = (A×C)∩(A×D)</code> ← TRUE</li>
+      <li>Distributes over ∪: <code>A×(C∪D) = (A×C)∪(A×D)</code> ← TRUE</li>
+    </ul>
+  </div>
+  <div class="card r">
+    <div class="lbl">Exam Trap — Q17: Union version is FALSE</div>
+    <p>The exam states: <em>"If B = C∩D, then A×B = (A×C)∪(A×D)"</em> — this is <strong>FALSE</strong>. If B = C∩D, then A×B = A×(C∩D) = (A×C)<strong>∩</strong>(A×D). The exam uses ∪ — that's the trap. The correct distribution uses the SAME operation (∩→∩, not ∩→∪).</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>If <code>|A|=3</code> and <code>|B|=4</code>, what is <code>|A×B|</code>? And <code>|B×A|</code>?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>Both are 12.</strong> Cardinality of Cartesian product = product of cardinalities regardless of order.</div>
+  </div>
+</div>
+
+<!-- SLIDE 4: Set Operations -->
+<div class="slide" data-i="4">
+  <div class="sh">Part B — Sets</div>
+  <h2>Slide 4: Set Operations</h2>
+  <div class="card b">
+    <div class="lbl">Definition</div>
+    <table><tr><th>Op</th><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td>Union</td><td><code>A∪B</code></td><td>In A or B or both</td></tr>
+      <tr><td>Intersection</td><td><code>A∩B</code></td><td>In both A and B</td></tr>
+      <tr><td>Difference</td><td><code>A\B</code></td><td>In A but NOT in B (= A∩Bᶜ)</td></tr>
+      <tr><td>Complement</td><td><code>Aᶜ</code></td><td>In U but not in A</td></tr>
+    </table>
+  </div>
+  <div class="card r">
+    <div class="lbl">Exam Trap — Q4: A\Aᶜ = ∅?</div>
+    <p><code>A\Aᶜ = A∩(Aᶜ)ᶜ = A∩A = A</code>. The exam says this equals ∅ — that's <strong>FALSE</strong>. A\Aᶜ = A, not ∅.</p>
+  </div>
+  <div class="card r">
+    <div class="lbl">Exam Trap — Q14: A⊆B → A\B = A?</div>
+    <p>If A⊆B, then every element of A is already in B. So A\B removes everything — <code>A\B = ∅</code>, NOT A. The exam says A\B = A → <strong>FALSE</strong>.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>If <code>A⊆B</code>, what is <code>A∩B</code>?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>A.</strong> Since A⊆B, every element of A is in B. The intersection is exactly A. <strong>Q15 = TRUE.</strong></div>
+  </div>
+</div>
+
+<!-- SLIDE 5: Power Sets -->
+<div class="slide" data-i="5">
+  <div class="sh">Part B — Sets</div>
+  <h2>Slide 5: Power Sets</h2>
+  <div class="card b">
+    <div class="lbl">Definition</div>
+    <ul>
+      <li><code>P(A)</code> = set of ALL subsets of A (including ∅ and A itself)</li>
+      <li><code>|P(A)| = 2^|A|</code></li>
+      <li><code>P(∅) = {∅}</code>, so <code>|P(∅)| = 1</code></li>
+      <li><code>P(A∩B) = P(A)∩P(B)</code> — TRUE (Q7)</li>
+      <li><code>|P(A∪B)| = 2^(|A|+|B|−|A∩B|)</code> — TRUE (Q13, inclusion-exclusion in exponent)</li>
+    </ul>
+  </div>
+  <div class="card r">
+    <div class="lbl">Exam Trap — Q6: |P({a,b,c})| = 2?</div>
+    <p><code>|P({a,b,c})| = 2³ = 8</code>, not 2. Statement is <strong>FALSE</strong>. n=3 elements → 2³=8 subsets.</p>
+  </div>
+  <div class="card p">
+    <div class="lbl">Analogy — Light Switches</div>
+    <p>n elements = n switches. Each subset = one on/off pattern. 3 switches → 2³ = 8 power set elements.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>How many elements does <code>P({∅, {1}, 2})</code> have?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>8.</strong> The set has 3 elements (∅, {1}, 2) → |P| = 2³ = 8.</div>
+  </div>
+</div>
+
+<!-- SLIDE 6: Part B T/F Reference — ALL 16 (CORRECTED v2) -->
+<div class="slide" data-i="6">
+  <div class="sh">Part B — Complete Answer Key (Version A)</div>
+  <h2>Slide 6: All 16 T/F Answers — Corrected</h2>
+  <div class="card r">
+    <div class="lbl">Exam Answer Key — Every Q4–Q19</div>
+    <table><tr><th>Q</th><th>Statement (exact, Version A)</th><th>Ans</th><th>Why</th></tr>
+      <tr><td>4</td><td><code>∀A⊂U, A\Aᶜ = ∅</code></td><td class="f2">F</td><td>= A∩A = A</td></tr>
+      <tr><td>5</td><td><code>∅ ∈ {{0},{1},{∅}}</code></td><td class="f2">F</td><td>Has {∅} not ∅ as element</td></tr>
+      <tr><td>6</td><td><code>|P({a,b,c})| = 2</code></td><td class="f2">F</td><td>= 2³ = 8</td></tr>
+      <tr><td>7</td><td><code>P(A∩B) = P(A)∩P(B)</code></td><td class="t">T</td><td>Standard identity</td></tr>
+      <tr><td>8</td><td><code>¬(P∧¬Q) ≡ ¬P∧Q</code></td><td class="f2">F</td><td>≡ ¬P∨Q (De Morgan)</td></tr>
+      <tr><td>9</td><td><code>P⇒Q ≡ ¬P∨Q</code></td><td class="t">T</td><td>Standard equivalence</td></tr>
+      <tr><td>10</td><td>P=T → P∨Q=T (for any Q)</td><td class="t">T</td><td>OR is T if any operand T</td></tr>
+      <tr><td>11</td><td>⇔ is associative</td><td class="t">T</td><td>Biconditional is associative</td></tr>
+      <tr><td>12</td><td><code>¬∀x P(x) ≡ ∃x ¬P(x)</code></td><td class="t">T</td><td>Quantifier negation law</td></tr>
+      <tr><td>13</td><td><code>|P(A∪B)| = 2^(|A|+|B|−|A∩B|)</code></td><td class="t">T</td><td>Inclusion-exclusion in exponent</td></tr>
+      <tr><td>14</td><td><code>(A⊆B) ⇒ (A\B = A)</code></td><td class="f2">F</td><td>A⊆B → A\B = ∅</td></tr>
+      <tr><td>15</td><td><code>(A⊆B) ⇒ (A∩B = A)</code></td><td class="t">T</td><td>All of A is in B</td></tr>
+      <tr><td>16</td><td><code>{1,2,3} = {2,3,1}</code></td><td class="t">T</td><td>Sets are unordered</td></tr>
+      <tr><td>17</td><td>If B=C∩D, then A×B = (A×C)<strong>∪</strong>(A×D)</td><td class="f2">F</td><td>Should be ∩ not ∪</td></tr>
+      <tr><td>18</td><td><code>|{∅}| = 0</code></td><td class="f2">F</td><td>= 1 (one element: ∅)</td></tr>
+      <tr><td>19</td><td>A={2,{2,{2}}}, B={2,{2}}. Is B⊆A?</td><td class="f2">F</td><td>{2}∉A, so B⊄A</td></tr>
+    </table>
+  </div>
+  <div class="card o">
+    <div class="lbl">Score: F=7, T=9</div>
+    <p>Q4,5,6,8,14,17,18,19 = FALSE (8 total) &nbsp;·&nbsp; Q7,9,10,11,12,13,15,16 = TRUE (8 total)</p>
+  </div>
+</div>
+
+<!-- SLIDE 7: Logic Connectives -->
+<div class="slide" data-i="7">
+  <div class="sh">Part B — Logic</div>
+  <h2>Slide 7: Propositional Logic — All Connectives</h2>
+  <div class="card b">
+    <div class="lbl">Definition</div>
+    <table><tr><th>Symbol</th><th>Name</th><th>True when…</th></tr>
+      <tr><td><code>¬P</code></td><td>NOT</td><td>P is False</td></tr>
+      <tr><td><code>P∧Q</code></td><td>AND</td><td>Both T</td></tr>
+      <tr><td><code>P∨Q</code></td><td>OR (inclusive)</td><td>At least one T</td></tr>
+      <tr><td><code>P⇒Q</code></td><td>IMPLIES</td><td>NOT (T→F) — only false when P=T, Q=F</td></tr>
+      <tr><td><code>P⇔Q</code></td><td>IFF / Biconditional</td><td>P and Q same value</td></tr>
+    </table>
+  </div>
+  <div class="card r">
+    <div class="lbl">Exam Trap — Q8: De Morgan Mistake</div>
+    <p><code>¬(P∧¬Q)</code>: apply De Morgan: <code>¬P ∨ ¬(¬Q) = ¬P ∨ Q</code>. The exam says <code>¬P∧Q</code> — that's <strong>FALSE</strong> (∨ ≠ ∧).</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">De Morgan's Laws — Memorize These</div>
+    <ul>
+      <li><code>¬(P∧Q) ≡ ¬P∨¬Q</code> — negate AND → OR</li>
+      <li><code>¬(P∨Q) ≡ ¬P∧¬Q</code> — negate OR → AND</li>
+    </ul>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Negate: <code>¬(P∨Q)</code>. What is the result?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>¬P∧¬Q</strong> — De Morgan's second law (negate OR → AND).</div>
+  </div>
+  <a class="yt" href="https://www.youtube.com/results?search_query=discrete+math+propositional+logic+de+morgan" target="_blank">▶ YouTube: Logic &amp; De Morgan</a>
+</div>
+
+<!-- SLIDE 8: Implication -->
+<div class="slide" data-i="8">
+  <div class="sh">Part B — Logic</div>
+  <h2>Slide 8: The Implication (⇒) — Only Fails T→F</h2>
+  <div class="card b">
+    <div class="lbl">Truth Table</div>
+    <table class="tb"><tr><th>P</th><th>Q</th><th>P⇒Q</th><th>Notes</th></tr>
+      <tr><td>T</td><td>T</td><td class="t">T</td><td>Promise kept</td></tr>
+      <tr><td>T</td><td>F</td><td class="f2">F</td><td>← THE ONLY FALSE CASE</td></tr>
+      <tr><td>F</td><td>T</td><td class="t">T</td><td>Vacuously true</td></tr>
+      <tr><td>F</td><td>F</td><td class="t">T</td><td>Vacuously true</td></tr>
+    </table>
+  </div>
+  <div class="card g">
+    <div class="lbl">Key Equivalences (Q9)</div>
+    <ul>
+      <li><code>P⇒Q ≡ ¬P∨Q</code> (Q9 — TRUE)</li>
+      <li>Contrapositive: <code>P⇒Q ≡ ¬Q⇒¬P</code> (logically equivalent)</li>
+      <li>Converse: <code>Q⇒P</code> — NOT equivalent to P⇒Q</li>
+    </ul>
+  </div>
+  <div class="card p">
+    <div class="lbl">Analogy</div>
+    <p>"If it rains, I'll bring an umbrella." Only way you LIED: it rained and you didn't bring one. If it didn't rain — you never broke the promise (vacuously true).</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>P=T, Q=F: evaluate <code>P⇒Q</code>, <code>Q⇒P</code>, <code>P⇔Q</code></p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>P⇒Q = F</strong> (T→F). <strong>Q⇒P = T</strong> (F→T vacuously). <strong>P⇔Q = F</strong> (different values).</div>
+  </div>
+</div>
+
+<!-- SLIDE 9: Logical Equivalences -->
+<div class="slide" data-i="9">
+  <div class="sh">Part B — Logic</div>
+  <h2>Slide 9: Logical Equivalences — Must-Know List</h2>
+  <div class="card b">
+    <div class="lbl">Equivalences</div>
+    <table><tr><th>Name</th><th>Equivalence</th></tr>
+      <tr><td>Implication</td><td><code>P⇒Q ≡ ¬P∨Q</code></td></tr>
+      <tr><td>Contrapositive</td><td><code>P⇒Q ≡ ¬Q⇒¬P</code></td></tr>
+      <tr><td>De Morgan 1</td><td><code>¬(P∧Q) ≡ ¬P∨¬Q</code></td></tr>
+      <tr><td>De Morgan 2</td><td><code>¬(P∨Q) ≡ ¬P∧¬Q</code></td></tr>
+      <tr><td>Double Neg</td><td><code>¬¬P ≡ P</code></td></tr>
+      <tr><td>Biconditional</td><td><code>P⇔Q ≡ (P⇒Q)∧(Q⇒P)</code></td></tr>
+      <tr><td>Negated Implication</td><td><code>¬(P⇒Q) ≡ P∧¬Q</code></td></tr>
+    </table>
+  </div>
+  <div class="card r">
+    <div class="lbl">Trap — Converse ≠ Contrapositive</div>
+    <p>Converse <code>Q⇒P</code> is NOT equivalent to <code>P⇒Q</code>. Only the <strong>contrapositive</strong> <code>¬Q⇒¬P</code> is equivalent.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Is <code>¬(P⇒Q)</code> equivalent to <code>P∧¬Q</code>?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>YES.</strong> P⇒Q ≡ ¬P∨Q, so ¬(P⇒Q) ≡ ¬(¬P∨Q) ≡ P∧¬Q. This is the only case where implication is FALSE (T→F).</div>
+  </div>
+  <a class="yt" href="https://www.youtube.com/results?search_query=discrete+math+logical+equivalences+laws" target="_blank">▶ YouTube: Logical Equivalences</a>
+</div>
+
+<!-- SLIDE 10: Quantifiers Theory -->
+<div class="slide" data-i="10">
+  <div class="sh">Part A — Quantifiers Theory</div>
+  <h2>Slide 10: Quantifiers — Theory &amp; Negation</h2>
+  <div class="card b">
+    <div class="lbl">The Two Quantifiers</div>
+    <table><tr><th>Symbol</th><th>Read as</th><th>True when…</th></tr>
+      <tr><td><code>∀x P(x)</code></td><td>"For ALL x, P(x)"</td><td>P holds for EVERY x in domain</td></tr>
+      <tr><td><code>∃x P(x)</code></td><td>"There EXISTS x, P(x)"</td><td>P holds for at LEAST ONE x</td></tr>
+    </table>
+  </div>
+  <div class="card r">
+    <div class="lbl">Order Matters — ∀∃ ≠ ∃∀</div>
+    <p><code>∀x∃y P(x,y)</code>: for each x, find a y (y can depend on x).<br>
+    <code>∃y∀x P(x,y)</code>: one single y works for ALL x (much stronger).<br>
+    These are NOT equivalent in general.</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Negation Algorithm — 3 Steps</div>
+    <ul>
+      <li><strong>Step 1:</strong> Push ¬ inward past quantifiers, flipping each: ¬∀ → ∃, ¬∃ → ∀</li>
+      <li><strong>Step 2:</strong> Flip ALL quantifiers encountered on the way in</li>
+      <li><strong>Step 3:</strong> Negate the final predicate</li>
+    </ul>
+    <p style="margin-top:8px">Laws: <code>¬∀x P(x) ≡ ∃x ¬P(x)</code> &nbsp;·&nbsp; <code>¬∃x P(x) ≡ ∀x ¬P(x)</code></p>
+  </div>
+  <div class="card p">
+    <div class="lbl">Analogy — Nested Loops</div>
+    <p><code>∀x∃y</code> = outer for-loop (all x), inner search (find a y). The y can depend on x.<br>
+    <code>∃y∀x</code> = find ONE y first, then it must work for every x. Much harder claim.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Negate: <code>∃x∀y (x+y=0)</code></p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>∀x∃y (x+y≠0)</strong> — flip ∃→∀, flip ∀→∃, negate predicate (= becomes ≠).</div>
+  </div>
+</div>
+
+<!-- SLIDE 11: Part A — Q1 Practice -->
+<div class="slide" data-i="11">
+  <div class="sh">Part A — Q1 (2 pts)</div>
+  <h2>Slide 11: Q1 — Quantifiers in a Set Formula</h2>
+  <div class="card b">
+    <div class="lbl">The Statement</div>
+    <p style="font-size:16px;margin-top:4px"><code>∀A⊆U, ∀B⊆U, |P(A∪B)| = 2^(|A|+|B|−|A∩B|)</code></p>
+    <p style="margin-top:8px">Q1 asks you to analyze this expression — identify the quantifier structure and/or evaluate it.</p>
+  </div>
+  <div class="card o">
+    <div class="lbl">MCQ Setup — Answer: D</div>
+    <p>The statement uses <strong>two universal quantifiers</strong>: ∀A and ∀B (both ranging over subsets of U). The formula itself is TRUE (it's the inclusion-exclusion formula for power sets: |P(A∪B)| = 2^|A∪B| = 2^(|A|+|B|−|A∩B|)).</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Walkthrough</div>
+    <ul>
+      <li>Count quantifier symbols: "∀A⊆U" = 1st ∀, "∀B⊆U" = 2nd ∀ → <strong>two universal quantifiers</strong></li>
+      <li>The formula: |P(A∪B)| = 2^|A∪B| and |A∪B| = |A|+|B|−|A∩B| by inclusion-exclusion</li>
+      <li>So |P(A∪B)| = 2^(|A|+|B|−|A∩B|) — <strong>TRUE for all A,B⊆U</strong></li>
+    </ul>
+  </div>
+  <div class="card r">
+    <div class="lbl">Common Mistake</div>
+    <p>Thinking the subscript "⊆U" is a separate quantifier symbol. It's a domain restriction, not an additional ∀ or ∃. There are exactly two ∀ symbols: one for A, one for B.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Self-Check</div>
+    <p>How many quantifier symbols appear in <code>∀x∈ℝ, ∃y∈ℝ, ∃z∈ℤ, y = zx²</code>?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>3 quantifiers</strong>: one ∀ (for x) and two ∃ (for y and z). The domain annotations ∈ℝ, ∈ℤ are restrictions, not extra quantifiers.</div>
+  </div>
+</div>
+
+<!-- SLIDE 12: Part A — Q2 Practice -->
+<div class="slide" data-i="12">
+  <div class="sh">Part A — Q2 (2 pts)</div>
+  <h2>Slide 12: Q2 — Negate a Nested Quantified Statement</h2>
+  <div class="card b">
+    <div class="lbl">The Statement to Negate</div>
+    <p style="font-size:15px;margin-top:4px"><code>∀n ∃k ∃(a₁…aₙ) ∀i, aᵢ = aᵢ₊₁</code></p>
+    <p style="margin-top:6px">In English: "For every n, there exists k and a sequence of length n, such that for all i, consecutive terms are equal."</p>
+  </div>
+  <div class="card o">
+    <div class="lbl">MCQ Setup — Answer: C</div>
+    <p>The correct negation (Answer C):<br>
+    <code>∃n ∀k ∀(a₁…aₙ) ∃i, aᵢ ≠ aᵢ₊₁</code></p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Step-by-Step Negation</div>
+    <ul>
+      <li>Start: <code>∀n ∃k ∃(a₁…aₙ) ∀i, aᵢ=aᵢ₊₁</code></li>
+      <li>Push ¬ in — flip EVERY quantifier:</li>
+      <li>¬∀n → ∃n</li>
+      <li>¬∃k → ∀k</li>
+      <li>¬∃(a₁…aₙ) → ∀(a₁…aₙ)</li>
+      <li>¬∀i → ∃i</li>
+      <li>Negate predicate: aᵢ=aᵢ₊₁ → aᵢ≠aᵢ₊₁</li>
+      <li>Result: <code>∃n ∀k ∀(a₁…aₙ) ∃i, aᵢ≠aᵢ₊₁</code></li>
+    </ul>
+  </div>
+  <div class="card r">
+    <div class="lbl">Trap</div>
+    <p>You must flip ALL quantifiers, not just the first one. Students often flip only ∀n→∃n and forget the inner ∃k, ∃(aᵢ), ∀i. Every single quantifier flips; only the predicate gets negated.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Negate: <code>∀x∈ℝ ∃y∈ℝ, x·y = 1</code></p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>∃x∈ℝ ∀y∈ℝ, x·y ≠ 1</strong> — flip ∀→∃, flip ∃→∀, negate = to ≠.</div>
+  </div>
+</div>
+
+<!-- SLIDE 13: Part A — Q3 Practice -->
+<div class="slide" data-i="13">
+  <div class="sh">Part A — Q3 (2 pts)</div>
+  <h2>Slide 13: Q3 — Translate English to Quantified Statement</h2>
+  <div class="card b">
+    <div class="lbl">The English Statement</div>
+    <p style="font-size:16px;margin-top:4px">"For all y∈ℝ, there exists x∈ℝ, there exists z∈ℤ, such that y = z·x²"</p>
+  </div>
+  <div class="card o">
+    <div class="lbl">MCQ Setup — Answer: D</div>
+    <p>The correct formal translation (Answer D):<br>
+    <code>∀y∈ℝ, ∃x∈ℝ, ∃z∈ℤ, y = z·x²</code></p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Translation Strategy</div>
+    <ul>
+      <li>"For all y∈ℝ" → <code>∀y∈ℝ</code></li>
+      <li>"there exists x∈ℝ" → <code>∃x∈ℝ</code></li>
+      <li>"there exists z∈ℤ" → <code>∃z∈ℤ</code></li>
+      <li>Predicate: <code>y = z·x²</code></li>
+      <li>Order of quantifiers preserved = order in English sentence</li>
+    </ul>
+  </div>
+  <div class="card p">
+    <div class="lbl">English → Symbol Triggers</div>
+    <table><tr><th>English Phrase</th><th>Symbol</th></tr>
+      <tr><td>for all, for every, for any, for each</td><td><code>∀</code></td></tr>
+      <tr><td>there exists, there is, some, at least one</td><td><code>∃</code></td></tr>
+    </table>
+  </div>
+  <div class="card r">
+    <div class="lbl">Trap — Domain Matters</div>
+    <p>x∈ℝ (reals) vs z∈ℤ (integers) — the domain of each variable is part of the translation. Writing ∃z∈ℝ when the problem says z∈ℤ is wrong.</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Is <code>∀n∈ℕ, ∃k∈ℕ, k &gt; n</code> true?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>TRUE.</strong> For any n, pick k = n+1. The existential witness (k) depends on n, which is fine here since the ∀ comes first.</div>
+  </div>
+</div>
+
+<!-- SLIDE 14: Truth Tables — How to Build -->
+<div class="slide" data-i="14">
+  <div class="sh">Part D — Truth Tables</div>
+  <h2>Slide 14: Truth Tables — How to Build</h2>
+  <div class="card g">
+    <div class="lbl">Step-by-Step Method</div>
+    <ul>
+      <li><strong>Step 1:</strong> n variables → 2ⁿ rows. Fill columns: col1 alternates every 1, col2 every 2, col3 every 4…</li>
+      <li><strong>Step 2:</strong> Add a column for every sub-expression (innermost first)</li>
+      <li><strong>Step 3:</strong> Compute the final column using earlier columns</li>
+      <li><strong>Step 4:</strong> All T = <em>tautology</em> · All F = <em>contradiction</em> · Mix = <em>contingent</em></li>
+    </ul>
+  </div>
+  <div class="card b">
+    <div class="lbl">3-Variable Fill Pattern</div>
+    <table class="tb"><tr><th>P</th><th>Q</th><th>R</th></tr>
+      <tr><td>T</td><td>T</td><td>T</td></tr>
+      <tr><td>T</td><td>T</td><td>F</td></tr>
+      <tr><td>T</td><td>F</td><td>T</td></tr>
+      <tr><td>T</td><td>F</td><td>F</td></tr>
+      <tr><td>F</td><td>T</td><td>T</td></tr>
+      <tr><td>F</td><td>T</td><td>F</td></tr>
+      <tr><td>F</td><td>F</td><td>T</td></tr>
+      <tr><td>F</td><td>F</td><td>F</td></tr>
+    </table>
+  </div>
+  <a class="yt" href="https://www.youtube.com/results?search_query=discrete+math+truth+tables+tautology" target="_blank">▶ YouTube: Truth Tables</a>
+</div>
+
+<!-- SLIDE 15: Part D — Tautology Solution -->
+<div class="slide" data-i="15">
+  <div class="sh">Part D — Tautology Proof</div>
+  <h2>Slide 15: Part D — Is P∧(Q⇔R) ⇒ (¬P⇒(Q∨R)) a Tautology?</h2>
+  <div class="card b">
+    <div class="lbl">Complete 8-Row Truth Table</div>
+    <table class="tb" style="font-size:12px">
+      <tr><th>P</th><th>Q</th><th>R</th><th>Q⇔R</th><th>P∧(Q⇔R)<br><small>LHS</small></th><th>¬P⇒(Q∨R)<br><small>RHS</small></th><th>LHS⇒RHS</th></tr>
+      <tr><td>T</td><td>T</td><td>T</td><td>T</td><td>T</td><td>T</td><td class="t">T</td></tr>
+      <tr><td>T</td><td>T</td><td>F</td><td>F</td><td>F</td><td>T</td><td class="t">T</td></tr>
+      <tr><td>T</td><td>F</td><td>T</td><td>F</td><td>F</td><td>T</td><td class="t">T</td></tr>
+      <tr><td>T</td><td>F</td><td>F</td><td>T</td><td>T</td><td>T</td><td class="t">T</td></tr>
+      <tr><td>F</td><td>T</td><td>T</td><td>T</td><td>F</td><td>T</td><td class="t">T</td></tr>
+      <tr><td>F</td><td>T</td><td>F</td><td>F</td><td>F</td><td>T</td><td class="t">T</td></tr>
+      <tr><td>F</td><td>F</td><td>T</td><td>F</td><td>F</td><td>T</td><td class="t">T</td></tr>
+      <tr><td>F</td><td>F</td><td>F</td><td>T</td><td>F</td><td style="color:var(--red);font-weight:700">F</td><td class="t">T</td></tr>
+    </table>
+  </div>
+  <div class="card g">
+    <div class="lbl">Conclusion: YES — Tautology</div>
+    <p>All 8 rows produce TRUE in the final column. Key insight: whenever LHS = F, the implication is vacuously TRUE regardless of RHS. Only row 8 has RHS=F, but LHS=F there too, so F⇒F = T.</p>
+  </div>
+  <div class="card o">
+    <div class="lbl">Why Row 8 (F,F,F) Deserves Attention</div>
+    <p>P=F, Q=F, R=F: Q⇔R = F⇔F = T; LHS = F∧T = <strong>F</strong>; ¬P=T, Q∨R=F, RHS = T⇒F = <strong>F</strong>; but LHS⇒RHS = F⇒F = <strong>T</strong>. Don't confuse RHS=F with the final result being F.</p>
+  </div>
+</div>
+
+<!-- SLIDE 16: Counting — Principles -->
+<div class="slide" data-i="16">
+  <div class="sh">Part C — Counting</div>
+  <h2>Slide 16: Counting — Multiplication &amp; Addition Principles</h2>
+  <div class="card b">
+    <div class="lbl">The Two Principles</div>
+    <ul>
+      <li><strong>Multiplication:</strong> Sequential independent choices → multiply: m ways then n ways = m×n total</li>
+      <li><strong>Addition:</strong> Mutually exclusive alternatives → add: m ways OR n ways = m+n total</li>
+    </ul>
+  </div>
+  <div class="card g">
+    <div class="lbl">Decision Tree</div>
+    <p>Draw branches: each branch = one choice. Count leaves = total outcomes. Same-level branches = multiply. Separate cases = add.</p>
+  </div>
+  <div class="card p">
+    <div class="lbl">Analogy</div>
+    <p>3 shirts × 4 pants = 12 outfits (AND → multiply). 3 red shirts + 4 blue shirts = 7 shirts to choose from (OR → add).</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>How many 3-letter codes use letters A–Z with no repetition?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>26×25×24 = 15,600.</strong> First letter: 26 choices. Second: 25. Third: 24. Sequential independent → multiply.</div>
+  </div>
+  <a class="yt" href="https://www.youtube.com/results?search_query=discrete+math+counting+multiplication+addition+principle" target="_blank">▶ YouTube: Counting Principles</a>
+</div>
+
+<!-- SLIDE 17: Ordered vs Unordered -->
+<div class="slide" data-i="17">
+  <div class="sh">Part C — Counting</div>
+  <h2>Slide 17: Ordered vs Unordered — The Decision Tree</h2>
+  <div class="card g">
+    <div class="lbl">Key Question Before Choosing Formula</div>
+    <p><strong>"Does order matter?"</strong> If {A,B,C} = {C,B,A} for your problem → unordered. If (A,B,C) ≠ (C,B,A) → ordered.</p>
+  </div>
+  <div class="g2">
+    <div class="fb">
+      <div class="f">Ordered</div>
+      <div class="d">Permutations P(n,r)<br>Sequence matters<br>ABC ≠ BAC</div>
+    </div>
+    <div class="fb">
+      <div class="f">Unordered</div>
+      <div class="d">Combinations C(n,r)<br>Only content matters<br>{A,B,C} = {B,A,C}</div>
+    </div>
+  </div>
+  <div class="card b" style="margin-top:14px">
+    <div class="lbl">Full Formula Grid</div>
+    <table><tr><th></th><th>No Repetition</th><th>With Repetition</th></tr>
+      <tr><td><strong>Ordered</strong></td><td><code>P(n,r) = n!/(n-r)!</code></td><td><code>nʳ</code></td></tr>
+      <tr><td><strong>Unordered</strong></td><td><code>C(n,r) = n!/r!(n-r)!</code></td><td><code>C(n+r-1,r)</code> (stars&amp;bars)</td></tr>
+    </table>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Choosing a 3-person committee from 10 people — ordered or unordered?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>Unordered → C(10,3) = 120.</strong> {Alice,Bob,Carl} = {Carl,Bob,Alice}. Order doesn't matter for a committee.</div>
+  </div>
+</div>
+
+<!-- SLIDE 18: C(n,r) and P(n,r) -->
+<div class="slide" data-i="18">
+  <div class="sh">Part C — Counting</div>
+  <h2>Slide 18: C(n,r) &amp; P(n,r) — Formulas &amp; Q20</h2>
+  <div class="g2">
+    <div class="fb">
+      <div class="f">C(n,r)</div>
+      <div class="d" style="font-size:14px;margin-top:8px">n! / (r!(n−r)!)<br>"n choose r"<br>Unordered, no repeat</div>
+    </div>
+    <div class="fb">
+      <div class="f">P(n,r)</div>
+      <div class="d" style="font-size:14px;margin-top:8px">n! / (n−r)!<br>"n permute r"<br>Ordered, no repeat</div>
+    </div>
+  </div>
+  <div class="card b" style="margin-top:14px">
+    <div class="lbl">Key Relation</div>
+    <p><code>P(n,r) = C(n,r) × r!</code> — permutations = combinations × arrangements of chosen items</p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>How many ways to arrange 5 books from 8 on a shelf?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>P(8,5) = 8!/3! = 6720.</strong> Order matters (shelf position), no repetition → permutation.</div>
+  </div>
+</div>
+
+<!-- SLIDE 19: Stars and Bars -->
+<div class="slide" data-i="19">
+  <div class="sh">Part C — Counting</div>
+  <h2>Slide 19: Stars and Bars — Distributing Identical Items</h2>
+  <div class="card b">
+    <div class="lbl">When to Use</div>
+    <p>Distributing <strong>n identical items</strong> into <strong>k distinct groups</strong>:</p>
+    <ul>
+      <li><strong>0 allowed per group:</strong> <code>C(n+k−1, k−1)</code></li>
+      <li><strong>At least 1 per group:</strong> <code>C(n−1, k−1)</code> (give 1 to each first, then distribute freely)</li>
+    </ul>
+  </div>
+  <div class="card p">
+    <div class="lbl">Analogy</div>
+    <p>n stars = items. k−1 bars = dividers between k groups. Arrange all of them: C(n+k−1, k−1) total arrangements.</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Example</div>
+    <p>Distribute 10 identical candies to 3 kids (0 ok each):<br>
+    n=10, k=3 → <code>C(10+2, 2) = C(12,2) = 66</code></p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Distribute 8 identical pizzas to 3 groups, each must get ≥ 1:</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>C(7,2) = 21.</strong> At least 1 each → C(n−1, k−1) = C(8−1, 3−1) = C(7,2) = 21.</div>
+  </div>
+  <a class="yt" href="https://www.youtube.com/results?search_query=discrete+math+stars+and+bars+combinations" target="_blank">▶ YouTube: Stars and Bars</a>
+</div>
+
+<!-- SLIDE 20: Pigeonhole -->
+<div class="slide" data-i="20">
+  <div class="sh">Part C — Counting</div>
+  <h2>Slide 20: Pigeonhole Principle</h2>
+  <div class="card b">
+    <div class="lbl">The Principle</div>
+    <p>If <strong>n+1</strong> objects go into <strong>n</strong> pigeonholes, at least one hole has ≥ 2.</p>
+    <p style="margin-top:8px"><strong>Generalized:</strong> N objects into k holes → some hole has ≥ ⌈N/k⌉ objects.</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Formula for Guarantee Questions</div>
+    <p>Max without guarantee = (max per group) × (number of groups)<br>
+    <strong>Minimum to guarantee = max without + 1</strong></p>
+  </div>
+  <div class="card w">
+    <div class="lbl">Practice</div>
+    <p>Min students needed to guarantee 3 share a birthday month?</p>
+    <button class="rb" onclick="rev(this)">Reveal Answer</button>
+    <div class="ra"><strong>25.</strong> 12 months, max without 3 sharing = 2×12=24. 24+1=25.</div>
+  </div>
+  <a class="yt" href="https://www.youtube.com/results?search_query=discrete+math+pigeonhole+principle" target="_blank">▶ YouTube: Pigeonhole</a>
+</div>
+
+<!-- SLIDE 21: Part C — Q20 -->
+<div class="slide" data-i="21">
+  <div class="sh">Part C — Q20 (2 pts)</div>
+  <h2>Slide 21: Q20 — Non-Adjacent Seating</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>11 students and 5 judges sit in a row. No two judges may be adjacent. How many arrangements are there?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Strategy: Place Students First, Use Gaps</div>
+    <ul>
+      <li><strong>Step 1:</strong> Arrange 11 students in a row: <code>11!</code> ways</li>
+      <li><strong>Step 2:</strong> 11 students create 12 gaps (before, between, after): _ S _ S _ … _ S _</li>
+      <li><strong>Step 3:</strong> Choose 5 of 12 gaps for judges (unordered): <code>C(12,5)</code></li>
+      <li><strong>Step 4:</strong> Arrange 5 judges in chosen gaps: <code>5!</code></li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: 11! × C(12,5) × 5!</div>
+    <p>This guarantees no two judges are in the same gap (so never adjacent).</p>
+  </div>
+  <div class="card r">
+    <div class="lbl">Trap — Gaps = n+1</div>
+    <p>n people in a row create <strong>n+1 gaps</strong>. 11 students → 12 gaps (don't forget the gap before the first student and after the last).</p>
+  </div>
+</div>
+
+<!-- SLIDE 22: Part C — Q21 -->
+<div class="slide" data-i="22">
+  <div class="sh">Part C — Q21 (2 pts)</div>
+  <h2>Slide 22: Q21 — Pigeonhole at Tables</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>There are 16 tables. What is the minimum number of people needed to guarantee at least 2 people share a table?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution</div>
+    <ul>
+      <li>Pigeonholes = 16 tables</li>
+      <li>Max with NO table having 2 people = 1 per table = 16 people</li>
+      <li>One more person forces a shared table: <strong>16 + 1 = 17</strong></li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: 17</div>
+    <p>17 people, 16 tables → by pigeonhole, at least one table has ≥ 2 people.</p>
+  </div>
+</div>
+
+<!-- SLIDE 23: Part C — Q22 -->
+<div class="slide" data-i="23">
+  <div class="sh">Part C — Q22 (2 pts)</div>
+  <h2>Slide 23: Q22 — Stars &amp; Bars (0 ok)</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>16 votes are distributed among 4 teams. Each team can receive 0 or more votes. How many ways can the votes be distributed?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution — Stars &amp; Bars (0 allowed)</div>
+    <ul>
+      <li>n = 16 votes (identical items), k = 4 teams (distinct groups)</li>
+      <li>Formula: <code>C(n+k−1, k−1) = C(16+3, 3) = C(19,3)</code></li>
+      <li><code>C(19,3) = 19!/(3!·16!) = (19·18·17)/(3·2·1) = 969</code></li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: C(19,3) = 969</div>
+  </div>
+</div>
+
+<!-- SLIDE 24: Part C — Q23 -->
+<div class="slide" data-i="24">
+  <div class="sh">Part C — Q23 (2 pts)</div>
+  <h2>Slide 24: Q23 — No Two Consecutive in {1..32}</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>What is the minimum number of integers you must choose from {1, 2, …, 32} to guarantee that two of them are consecutive?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution — Max Independent Set First</div>
+    <ul>
+      <li>Max set with no two consecutive: take ALL odd numbers {1,3,5,…,31} = <strong>16 numbers</strong></li>
+      <li>Adding any 17th number forces a consecutive pair</li>
+      <li>Guarantee = 16 + 1 = <strong>17</strong></li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: 17</div>
+  </div>
+</div>
+
+<!-- SLIDE 25: Part C — Q24 -->
+<div class="slide" data-i="25">
+  <div class="sh">Part C — Q24 (2 pts)</div>
+  <h2>Slide 25: Q24 — Guarantee ≥1 Vote from Each of 4 Teams</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>11 students each vote for one of 4 teams. What is the minimum number of students who must vote to guarantee that every team receives at least 3 votes?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution — Worst Case + 1</div>
+    <ul>
+      <li>Worst case: maximize students without ALL 4 teams reaching 3 votes</li>
+      <li>3 teams could get 2 votes each = 6 votes, remaining all go to 4th team</li>
+      <li>But actual worst case: 3 teams each get exactly 2 votes, no team reaches 3 yet</li>
+      <li>Max before guarantee: give 2 to each of 4 teams = 8 students</li>
+      <li>8 + 1 = 9 means at least one team gets ≥3</li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: 9</div>
+    <p>9 students guarantees at least one team has ≥3 votes. (Verify from your exam PDF for exact problem wording.)</p>
+  </div>
+</div>
+
+<!-- SLIDE 26: Part C — Q25 -->
+<div class="slide" data-i="26">
+  <div class="sh">Part C — Q25 (2 pts)</div>
+  <h2>Slide 26: Q25 — Can We Guarantee ALL 4 Teams Get ≥1 Vote?</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>16 votes are distributed among 4 teams. What is the minimum number of votes needed to <em>guarantee</em> that every team receives at least 1 vote?</p>
+  </div>
+  <div class="card r">
+    <div class="lbl">Answer: CANNOT Be Guaranteed</div>
+    <p>No matter how many total votes there are, all of them could theoretically go to just one team. There is <strong>no minimum number</strong> that guarantees all 4 teams get at least 1 — unless you have control over how votes are cast.</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Why</div>
+    <p>Even with 16 votes, the distribution (16,0,0,0) is valid — all 16 go to Team 1. Since votes are free choices, no count of total votes prevents this. The guarantee is impossible.</p>
+  </div>
+  <div class="card o">
+    <div class="lbl">Key Insight</div>
+    <p>Pigeonhole guarantees AT LEAST one hole has ≥ many items, not that EVERY hole has ≥1. For every hole to have ≥1, you'd need to control the distribution, not just the count.</p>
+  </div>
+</div>
+
+<!-- SLIDE 27: Part C — Q26 -->
+<div class="slide" data-i="27">
+  <div class="sh">Part C — Q26 (2 pts)</div>
+  <h2>Slide 27: Q26 — Stars &amp; Bars with ≥1 Constraint</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>16 votes are distributed among 4 teams such that <strong>each team gets at least 1 vote</strong>. How many ways can this happen?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution — Stars &amp; Bars (≥1 each)</div>
+    <ul>
+      <li>Give 1 vote to each of the 4 teams first (mandatory): 4 votes used, <strong>12 remain</strong></li>
+      <li>Wait — actually use the direct formula: C(n−1, k−1) where n=votes, k=teams</li>
+      <li><code>C(16−1, 4−1) = C(15, 3)</code></li>
+      <li><code>C(15,3) = 15!/(3!·12!) = (15·14·13)/(3·2·1) = 455</code></li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: C(15,3) = 455</div>
+  </div>
+  <div class="card r">
+    <div class="lbl">Trap — 0-ok vs ≥1</div>
+    <p>0-ok: C(n+k−1, k−1) = C(19,3) = 969. &nbsp; ≥1 each: C(n−1, k−1) = C(15,3) = 455. Don't confuse these — the difference is whether you subtract from n or add to it.</p>
+  </div>
+</div>
+
+<!-- SLIDE 28: Part C — Q27 -->
+<div class="slide" data-i="28">
+  <div class="sh">Part C — Q27 (2 pts)</div>
+  <h2>Slide 28: Q27 — Choose 5 Voting Students from 11</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>From 11 students, choose 5 to be the voting representatives. How many ways can this be done?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution</div>
+    <ul>
+      <li>Unordered selection (the group {A,B,C,D,E} = {E,D,C,B,A})</li>
+      <li>No repetition (can't pick the same student twice)</li>
+      <li>Formula: <code>C(11,5)</code></li>
+      <li><code>C(11,5) = 11!/(5!·6!) = (11·10·9·8·7)/(5·4·3·2·1) = 462</code></li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: C(11,5) = 462</div>
+  </div>
+</div>
+
+<!-- SLIDE 29: Part C — Q28 -->
+<div class="slide" data-i="29">
+  <div class="sh">Part C — Q28 (2 pts)</div>
+  <h2>Slide 29: Q28 — Ordered Voting with Repetition</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>16 votes are cast one-by-one (in order), each for one of 4 teams. How many different sequences of votes are possible?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution</div>
+    <ul>
+      <li>Each of the 16 votes independently chooses 1 of 4 teams</li>
+      <li>Order matters (vote 1 for Team A, vote 2 for Team B ≠ vote 1 for Team B, vote 2 for Team A)</li>
+      <li>Repetition allowed (multiple votes can go to same team)</li>
+      <li>Formula: <code>n^r = 4^16</code> (ordered with repetition)</li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: 4¹⁶</div>
+    <p><code>4^16 = 4,294,967,296</code></p>
+  </div>
+  <div class="card r">
+    <div class="lbl">Trap — Don't Use C(n,r)</div>
+    <p>C(n,r) is for unordered, no-repeat. Here order matters AND repetition is allowed → nʳ formula.</p>
+  </div>
+</div>
+
+<!-- SLIDE 30: Part C — Q29 -->
+<div class="slide" data-i="30">
+  <div class="sh">Part C — Q29 (2 pts)</div>
+  <h2>Slide 30: Q29 — Complement Method</h2>
+  <div class="card b">
+    <div class="lbl">The Problem</div>
+    <p>From 11 students (8 on the winning team, 3 on other teams), choose 2 to present. How many 2-person groups include at least 1 student from the winning team?</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">Solution — Complement Method</div>
+    <ul>
+      <li>Total 2-person groups from 11: <code>C(11,2) = 55</code></li>
+      <li>Groups with NO winning team member (all from 3 non-winners): <code>C(3,2) = 3</code></li>
+      <li>At least 1 winner = Total − None: <code>55 − 3 = 52</code></li>
+    </ul>
+  </div>
+  <div class="card o">
+    <div class="lbl">Answer: 52</div>
+  </div>
+  <div class="card p">
+    <div class="lbl">Complement Method — General Rule</div>
+    <p>When "at least 1" is hard to count directly:<br>
+    <code>|at least 1| = |total| − |exactly 0|</code><br>
+    Always check if "exactly 0" is easier to count than "at least 1".</p>
+  </div>
+  <div class="card r">
+    <div class="lbl">Note</div>
+    <p>Verify the exact problem setup (team sizes) against your exam PDF — the method (complement) and answer (52) are correct.</p>
+  </div>
+</div>
+
+<!-- SLIDE 31: Cheat Sheet Summary -->
+<div class="slide" data-i="31">
+  <div class="sh">Final Reference</div>
+  <h2>Slide 31: Cheat Sheet Summary</h2>
+  <div class="card b">
+    <div class="lbl">Sets</div>
+    <ul>
+      <li><code>|P(A)| = 2^|A|</code> · <code>|A×B| = |A|·|B|</code> · <code>A\B = A∩Bᶜ</code></li>
+      <li><code>A⊆B → A∩B=A</code> and <code>A⊆B → A\B=∅</code> (NOT A)</li>
+      <li><code>|{∅}|=1</code> · Sets are unordered · <code>∅⊆</code> everything</li>
+      <li>Q17 trap: A×(C∩D)=(A×C)∩(A×D) is TRUE; using ∪ instead of ∩ is FALSE</li>
+    </ul>
+  </div>
+  <div class="card g">
+    <div class="lbl">Logic</div>
+    <ul>
+      <li><code>P⇒Q ≡ ¬P∨Q</code> · Only false when T→F</li>
+      <li>De Morgan: <code>¬(P∧Q)≡¬P∨¬Q</code> · <code>¬(P∨Q)≡¬P∧¬Q</code></li>
+      <li>Contrapositive ≡ original · Converse ≠ original</li>
+    </ul>
+  </div>
+  <div class="card p">
+    <div class="lbl">Quantifiers</div>
+    <ul>
+      <li><code>¬∀x P(x) ≡ ∃x ¬P(x)</code> · <code>¬∃x P(x) ≡ ∀x ¬P(x)</code></li>
+      <li>Negate: flip ALL quantifiers left to right, negate predicate last</li>
+      <li>∀∃ ≠ ∃∀ in general (order matters)</li>
+    </ul>
+  </div>
+  <div class="card b">
+    <div class="lbl">Counting Quick Reference</div>
+    <table><tr><th>Problem Type</th><th>Formula</th><th>Example</th></tr>
+      <tr><td>Ordered, no repeat</td><td><code>P(n,r) = n!/(n-r)!</code></td><td>Arrange 5 from 8: P(8,5)</td></tr>
+      <tr><td>Unordered, no repeat</td><td><code>C(n,r) = n!/r!(n-r)!</code></td><td>Committee of 5 from 11: C(11,5)=462</td></tr>
+      <tr><td>Ordered, with repetition</td><td><code>nʳ</code></td><td>16 votes to 4 teams: 4^16</td></tr>
+      <tr><td>Distribute n to k groups (0 ok)</td><td><code>C(n+k-1, k-1)</code></td><td>16 votes 4 teams: C(19,3)=969</td></tr>
+      <tr><td>Distribute n to k groups (≥1)</td><td><code>C(n-1, k-1)</code></td><td>16 votes 4 teams ≥1: C(15,3)=455</td></tr>
+      <tr><td>Guarantee sharing (pigeonhole)</td><td>max_without + 1</td><td>17 people for 16 tables</td></tr>
+      <tr><td>Non-adjacent placement</td><td>arrange first, gaps formula</td><td>11! × C(12,5) × 5!</td></tr>
+      <tr><td>At least 1 (complement)</td><td>total − none</td><td>C(11,2)−C(3,2)=52</td></tr>
+    </table>
+  </div>
+  <div class="card r">
+    <div class="lbl">Top 8 Exam Traps</div>
+    <ul>
+      <li>Q4: <code>A\Aᶜ = A</code> (not ∅)</li>
+      <li>Q5: ∅ ∉ {{0},{1},{∅}} — that set has {∅} not ∅</li>
+      <li>Q8: ¬(P∧¬Q) = ¬P∨Q (not ¬P∧Q)</li>
+      <li>Q14: A⊆B → A\B = ∅ (not A)</li>
+      <li>Q17: B=C∩D → A×B = (A×C)∩(A×D) (exam says ∪ = trap)</li>
+      <li>Q18: <code>|{∅}| = 1</code> (not 0)</li>
+      <li>Q19: B={2,{2}}, A={2,{2,{2}}} → B⊄A ({2}∉A)</li>
+      <li>Non-adjacent: n people → n+1 gaps</li>
+    </ul>
+  </div>
+</div>
+
+</div><!-- #show -->
+
+<div id="bot">
+  <button class="nb" id="pb" onclick="go(-1)" disabled>← Previous</button>
+  <button class="nb" id="nb" onclick="go(1)">Next →</button>
+</div>
+
+<script>
+const TITLES=[
+  "Welcome / How to Use",
+  "Sets — Notation & Basics",
+  "Set Cardinality",
+  "Cartesian Products",
+  "Set Operations",
+  "Power Sets",
+  "Part B — All 16 T/F Answers (Corrected)",
+  "Logic Connectives & De Morgan",
+  "The Implication (⇒)",
+  "Logical Equivalences",
+  "Quantifiers — Theory & Negation",
+  "Part A — Q1: ∀∀ Quantifier Structure (Ans: D)",
+  "Part A — Q2: Negate Nested Quantifiers (Ans: C)",
+  "Part A — Q3: Translate to Quantified Form (Ans: D)",
+  "Truth Tables — How to Build",
+  "Part D — Tautology Proof",
+  "Counting — Multiplication & Addition",
+  "Ordered vs Unordered — Decision Tree",
+  "C(n,r) & P(n,r) Formulas",
+  "Stars and Bars",
+  "Pigeonhole Principle",
+  "Part C — Q20: Non-Adjacent Seating",
+  "Part C — Q21: Pigeonhole at Tables",
+  "Part C — Q22: Stars & Bars (0 ok)",
+  "Part C — Q23: No Consecutive in {1..32}",
+  "Part C — Q24: Guarantee ≥3 per Team",
+  "Part C — Q25: Cannot Guarantee All Teams",
+  "Part C — Q26: Stars & Bars (≥1 each)",
+  "Part C — Q27: Choose 5 from 11",
+  "Part C — Q28: Ordered Voting 4^16",
+  "Part C — Q29: Complement Method = 52",
+  "Cheat Sheet Summary"
+];
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+
+function buildTOC(){
+  const l=document.getElementById('tlist');
+  TITLES.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='ti'+(i===0?' act':'');
+    d.textContent=i+'. '+t;
+    d.onclick=()=>{goTo(i);closeTOC();};
+    l.appendChild(d);
+  });
+}
+function ui(){
+  slides.forEach((s,i)=>s.classList.toggle('active',i===cur));
+  document.getElementById('ctr').textContent='Slide '+(cur+1)+' / '+N;
+  document.getElementById('bar').style.width=((cur+1)/N*100)+'%';
+  document.getElementById('pb').disabled=cur===0;
+  document.getElementById('nb').disabled=cur===N-1;
+  document.querySelectorAll('.ti').forEach((el,i)=>el.classList.toggle('act',i===cur));
+}
+function go(d){goTo(cur+d);}
+function goTo(n){if(n>=0&&n<N){cur=n;ui();window.scrollTo(0,0);}}
+function toggleTOC(){document.getElementById('overlay').style.display='flex';}
+function closeTOC(){document.getElementById('overlay').style.display='none';}
+function rev(btn){btn.nextElementSibling.classList.add('on');btn.style.display='none';}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+});
+buildTOC();ui();
+</script>
+</body>
+</html>
